@@ -1,0 +1,63 @@
+import pandas as pd
+import numpy as np
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import train_test_split
+from matplotlib import pyplot as plt
+#from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF, ConstantKernel
+
+
+tt = pd.read_csv('https://raw.githubusercontent.com/carlson9/KocPython2019/master/12.GaussianProcesses/immSurvey.csv')
+tt.head()
+
+
+
+alphas = tt.stanMeansNewSysPooled
+sample = tt.textToSend
+
+
+vec = CountVectorizer()
+X = vec.fit_transform(sample)
+pd.DataFrame(X.toarray(), columns=vec.get_feature_names())
+
+
+vec = TfidfVectorizer()
+X = vec.fit_transform(sample)
+pd.DataFrame(X.toarray(), columns=vec.get_feature_names())
+
+
+Xtrain, Xtest, ytrain, ytest = train_test_split(X, alphas,
+                                                random_state=1)
+
+rbf = ConstantKernel(1.0) * RBF(length_scale=1.0)
+gpr = GaussianProcessRegressor(kernel=rbf, alpha=1e-8)
+
+gpr.fit(Xtrain.toarray(), ytrain)
+
+
+mu_s, cov_s = gpr.predict(Xtest.toarray(), return_cov=True)
+
+
+first_model=np.corrcoef(ytest, mu_s)
+
+
+#Bigram model
+
+bigram_vectorizer = CountVectorizer(ngram_range=(1, 2),token_pattern=r'\b\w+\b', min_df=1)
+#Convert to Numeric Data
+X_2 = bigram_vectorizer.fit_transform(sample)
+X_2train, X_2test, y_2train, y_2test = train_test_split(X_2, alphas,
+                                                random_state=1)
+
+rbf_2 = ConstantKernel(1.0) * RBF(length_scale=1.0)
+gpr_2 = GaussianProcessRegressor(kernel=rbf, alpha=1e-8)
+
+gpr_2.fit(X_2train.toarray(), y_2train)
+# Compute posterior predictive mean and covariance
+mu_s_2, cov_s_2 = gpr_2.predict(X_2test.toarray(), return_cov=True)
+# test correlation between test and mus
+second_model=np.corrcoef(y_2test, mu_s_2)
+
+print ("Second system is" +str(round((second_model / first_model)[0,1]-1,2)) +" more stable than first system" )
