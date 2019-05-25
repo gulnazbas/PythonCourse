@@ -243,10 +243,11 @@ MSE=sum(Error^2)/Error.shape[0]
 
 Error_t=(y_t-(y_t_p))
 MSE_t=sum(Error_t^2)/Error_t.shape[0]
-
+mean_y=np.mean(y)
+mean_y_t=np.mean(y_t)
 
 print('Model Data MSE: ' +str(MSE.__round__()) + '\n' +'Test Data MSE: ' +str(MSE_t.__round__()))
-
+print('Model Data Predict Error is %'+str(((np.sqrt(MSE)/mean_y)*100).round()) +  '\n'  + 'Test Data Predition Error is %' + str(((np.sqrt(MSE_t)/mean_y_t)*100).round())  )
 
 
 
